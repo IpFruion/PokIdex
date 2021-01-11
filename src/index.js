@@ -49,7 +49,6 @@ class LoadDex extends React.Component {
     if (isLoad) {
       loadFileMenu = <LoadFile blur={this.main} onFinished={(file) => {
         if (file) {
-          //TODO: Loading screen? or progress bar?
           this.uploadFile(file);
         }
         this.showLoadFile(false);
@@ -110,12 +109,10 @@ class App extends React.Component {
     }
   }
 
-  // TODO: Instead of popout being inside loaded supply here so that all pages have access
   render () {
     // <Route render={() => (
     //   <NotFound dexProfile={this.state.dexProfile}/>
     // )}/>
-    //TODO: Figure out how to when this.state.dexProfile is null go back to / home
     return (
       <Router>
         <Switch>

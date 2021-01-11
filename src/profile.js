@@ -18,7 +18,6 @@ export class Profile extends React.Component {
     return data;
   }
 
-  // TODO: Add graph for money and then a card list
   render() {
     return (
       <Route exact={true} path="/profile" render={({history}) => (

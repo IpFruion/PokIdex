@@ -16,7 +16,6 @@ export class NewCard extends React.Component {
     const firstValue = values[0];
     const secondValue = values[1];
     const card = new Card(cardName, firstValue, secondValue);
-    // TODO: Add Progress Bar Circular
     card.getCostData().then((card) => {
       if (card) {
         this.props.addCardToDex(card);
