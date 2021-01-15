@@ -8,6 +8,7 @@
     "@testing-library/user-event": "^12.6.0",
     "bootstrap": "^4.5.3",
     "chart.js": "^2.9.4",
+    "formik": "^2.2.6",
     "react": "^17.0.1",
     "react-bootstrap": "^1.4.3",
     "react-chartkick": "^0.4.1",
@@ -15,6 +16,7 @@
     "react-html5-camera-photo": "^1.5.4",
     "react-router-dom": "^5.2.0",
     "react-scripts": "4.0.1",
+    "sass": "^1.32.2",
     "web-vitals": "^0.2.4"
   },
   "scripts": {
