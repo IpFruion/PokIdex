@@ -1,6 +1,7 @@
 import React from 'react';
 
 const MONEY_REGEX = /\$(([1-9]\d{0,2}(,\d{3})*)|(([1-9]\d*)?\d))(\.\d\d)/;
+const SOLD_RESULTS_REGEX = /^\D*([\d])/;
 
 export function downloadTextFile(fileName, data) {
   const element = document.createElement("a");
@@ -54,7 +55,7 @@ export class Card {
     this.cardName = cardName;
     this.firstId = firstId;
     this.secondId = secondId;
-    this.lastUpdatedCosts = null;
+    this.lastUpdated = null;
     this.costEstimate = null;
     this.highValue = null;
     this.lowValue = null;
@@ -65,10 +66,10 @@ export class Card {
   }
 
   getCostData() {
-    //TOO: Fix for not using proxy service for the requests possible port to server side data (depending on popularity)
+    // TODO: Fix for not using proxy service for the requests possible port to server side data (depending on popularity)
     const corsAnywhere = 'https://cors-anywhere.herokuapp.com/';
     const url = "https://mavin.io/search?q=" + this.cardName + "+" + this.firstId + "%2F" + this.secondId + "&bt=sold";
-    // console.log(url);
+    // TODO: Fix Promise from fetch to just return the card
     const promiseFn = function (resolve, reject) {
       fetch(corsAnywhere + url)
         .then((res) => res.text())
@@ -88,14 +89,21 @@ export class Card {
                 this.costEstimate = Number(estimate.substr(1, estimate.length));
                 this.lowValue = Number(obj.offers.lowPrice);
                 this.highValue = Number(obj.offers.highPrice);
-                this.lastUpdatedCosts = new Date();
+                this.lastUpdated = new Date();
+              }
+              if (obj["@type"] === "Article") {
+                const match = obj["articleBody"].match(SOLD_RESULTS_REGEX);
+                if (match && Number(match[1]) === 0) {
+                  reject(new Error("Zero Sold Results Found"));
+                  return;
+                }
               }
             }
           }
           resolve(this);
         }).catch(err => {
           console.log(err);
-          reject();
+          reject(err);
         });
     }
     return new Promise(promiseFn.bind(this));

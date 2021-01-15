@@ -2,6 +2,7 @@
 import React from 'react';
 import { Route } from 'react-router-dom';
 import { Camera, FACING_MODES } from 'react-html5-camera-photo';
+import { Container, Row, Button, } from 'react-bootstrap';
 import 'react-html5-camera-photo/build/css/index.css';
 // import ReactDOM from 'react-dom';
 
@@ -43,22 +44,25 @@ export class Scanner extends React.Component {
   render() {
     return (
       <Route exact={true} path="/scanner" render={({history}) => (
-        <div className="scanner">
-          <button onClick={() => history.push("/profile")}>Profile</button>
-          <Camera
-            idealFacingMode={FACING_MODES.ENVIRONMENT}
-            idealResolution = {{width: 640, height: 480}}
-            imageCompression = {0.97}
-            isMaxResolution = {false}
-            isImageMirror = {false}
-            isSilentMode = {true}
-            isDisplayStartCameraError = {true}
-            isFullscreen = {false}
-            sizeFactor = {1}
-            onTakePhoto = {this.takePhoto}
-          />
-          {this.state.image}
-        </div>
+        <Container className="mt-4">
+          <Row>
+            <Button className="rounded-pill px-4" onClick={() => history.push("/profile")}>Profile</Button>
+          </Row>
+          <Row>
+            <Camera
+              idealFacingMode={FACING_MODES.ENVIRONMENT}
+              idealResolution = {{width: 640, height: 480}}
+              imageCompression = {0.97}
+              isMaxResolution = {false}
+              isImageMirror = {false}
+              isSilentMode = {true}
+              isDisplayStartCameraError = {true}
+              isFullscreen = {false}
+              sizeFactor = {1}
+              onTakePhoto = {this.takePhoto}
+            />
+          </Row>
+        </Container>
       )}/>
     )
   }

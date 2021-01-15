@@ -1,0 +1,36 @@
+
+/* The following line can be included in a src/App.scss */
+
+$theme-colors: (
+  'primary': black,
+  'danger': tomato,
+);
+
+.poke-button {
+  padding: 20px;
+}
+
+body {
+  font: 14px "Century Gothic", Futura, sans-serif;
+  margin: 20px;
+}
+
+/* 320x640 */
+@media (max-width: 480px) {
+  body {
+    background-image: url("res/pokemon_background_mobile_2.png");
+    background-size: cover;
+    background-repeat: no-repeat;
+  }
+}
+
+/* 1280x720 */
+@media (min-width: 481px) {
+  body {
+    background-image: url("res/pokemon_background_desktop.png");
+    background-size: cover;
+    background-repeat: no-repeat;
+  }
+}
+
+@import "../node_modules/bootstrap/scss/bootstrap";
