@@ -1,11 +1,12 @@
 import React from 'react';
 import { Route } from 'react-router-dom';
-import { Card } from './util.js';
+import { PokeCard } from './util.js';
 import { Container, Form, Button, Toast } from 'react-bootstrap';
 import { Formik } from 'formik';
 
 
-const _CARD_NUMBER_REGEX = /^([1-9]\d*)[/]([1-9]\d*)$/;
+const CARD_NAME_REGEX = /^[a-zA-Z]*$/;
+const CARD_NUMBER_REGEX = /^(\d*)[/](\d*)$/;
 
 export class NewCard extends React.Component {
 
@@ -18,19 +19,16 @@ export class NewCard extends React.Component {
   }
 
   submitData(values, form) {
-    const matches = values.cardNumbers.match(_CARD_NUMBER_REGEX);
-    const card = new Card(values.cardName, matches[1], matches[2]);
-    card.getCostData().then((card) => {
-      if (card) {
-        this.props.addCardToDex(card);
-        this.setState({...this.state, currentCard: card});
-        form.resetForm();
-      } else {
-        throw new Error("Card is Null");
-      }
+    const matches = values.cardNumbers.match(CARD_NUMBER_REGEX);
+    const card = new PokeCard(values.cardName, matches[1], matches[2]);
+    card.updateData().then(card => {
+      this.props.addCardToDex(card);
+      this.setState({...this.state, currentCard: card});
+      form.resetForm();
     }).catch(err => {
-      form.setFieldError("cardName", "Card Not Found");
-      form.setFieldError("cardNumbers", "Card Not Found");
+      const msg = "Card Data Error";
+      form.setFieldError("cardName", msg);
+      form.setFieldError("cardNumbers", msg);
       const error = {};
       error.type = 'danger';
       error.component = (
@@ -40,18 +38,10 @@ export class NewCard extends React.Component {
     });
   }
 
-  onSubmitCard() {
-    // Validate card name and number i.e. make sure card name is one word and all letters
-    // Card number is two numbers seperated by a forward slash
-    // console.log(form);
-
-    // this.onSubmitCard(event.target);
-  }
-
   validateCard(values, props) {
     const errors = {};
     if (values.cardName) {
-      if (values.cardName.match(/[0-9 ]+/)) {
+      if (!values.cardName.match(CARD_NAME_REGEX)) {
         errors.cardName = "Card Name can't have spaces or numbers";
       }
     } else {
@@ -59,7 +49,7 @@ export class NewCard extends React.Component {
     }
 
     if (values.cardNumbers) {
-      const matching = values.cardNumbers.match(_CARD_NUMBER_REGEX);
+      const matching = values.cardNumbers.match(CARD_NUMBER_REGEX);
       if (!matching) {
         errors.cardNumbers = "Card Numbers must be in the form of 'num/num'"
       } else if (Number(matching[1]) > Number(matching[2])) {
@@ -73,12 +63,8 @@ export class NewCard extends React.Component {
   }
 
   getToast() {
-    // TODO: Image of pokemon in Toast?
-    // <img
-    //   src="holder.js/20x20?text=%20"
-    //   className="rounded mr-2"
-    //   alt=""
-    // />
+    // TODO: Image of pokemon in Toast? And Spinner for timings
+
     if (this.state.currentCard) {
       return (
         <Toast
@@ -89,11 +75,16 @@ export class NewCard extends React.Component {
           autohide
         >
           <Toast.Header>
+            <img
+              src={this.state.currentCard.imageUrl}
+              className="rounded mr-2"
+              alt=""
+            />
             <strong className="mr-auto">{this.state.currentCard.cardName}</strong>
             <small>{this.state.currentCard.lastUpdated.toLocaleString()}</small>
           </Toast.Header>
           <Toast.Body>
-            Loaded {this.state.currentCard.cardName} - {this.state.currentCard.firstId + "/" + this.state.currentCard.secondId} into DexProfile!
+            Loaded {this.state.currentCard.cardName} - {this.state.currentCard.firstId + "/" + this.state.currentCard.secondId} cost value of ${this.state.currentCard.costEstimate}!
           </Toast.Body>
         </Toast>
       );
@@ -155,8 +146,8 @@ export class NewCard extends React.Component {
                     {errors.cardNumbers}
                   </Form.Control.Feedback>
                 </Form.Group>
-                <Button className="rounded-pill px-4 m-2" type="submit">Submit Card</Button>
-                <Button className="rounded-pill px-4 m-2" onClick={() => history.push("/profile")}>Profile</Button>
+                <Button className="btn-poke" type="submit">Submit Card</Button>
+                <Button className="btn-poke" onClick={() => history.push("/profile")}>Profile</Button>
               </Form>
               )
             }

@@ -18,8 +18,8 @@ export class LoadDex extends React.Component {
     if (this.state.loadFile) {
       const reader = new FileReader()
       reader.addEventListener('load', (event) => {
-        const profile = DexProfile();
-        this.props.onLoadedDex(Object.assign(profile, JSON.parse(event.target.result)));
+        const profile = DexProfile.fromJSON(event.target.result);
+        this.props.onLoadedDex(profile);
         this.setState({...this.state, loadFile: null, showLoad: false, progress: -1});
         history.push("/profile");
       });
@@ -41,7 +41,7 @@ export class LoadDex extends React.Component {
     const verifyButton = () => {
       if (this.state.loadFile && this.state.progress === -1) {
         return (
-          <Button className="rounded-pill px-4 mt-2" onClick={() => this.uploadFile(history)}>Accept</Button>
+          <Button className="btn-poke" onClick={() => this.uploadFile(history)}>Accept</Button>
         );
       }
       return null;
@@ -78,17 +78,17 @@ export class LoadDex extends React.Component {
       <Route path="/" render={({history}) => (
         <Container className="mt-4">
           {this.getLoadFile(history)}
-          <Row className="justify-content-md-center">
+          <Row className="justify-content-center">
             <h1>PokIndex</h1>
           </Row>
-          <Row className="justify-content-md-center">
-            <Button className="rounded-pill px-4" onClick={() => this.setState({...this.state, showLoad: true})}>Load .dex file</Button>
+          <Row className="justify-content-center">
+            <Button className="btn-poke" onClick={() => this.setState({...this.state, showLoad: true})}>Load .dex file</Button>
           </Row>
-          <Row className="justify-content-md-center">
+          <Row className="justify-content-center">
             <h2>or</h2>
           </Row>
-          <Row className="justify-content-md-center">
-            <Button className="rounded-pill px-4" onClick={() => {
+          <Row className="justify-content-center">
+            <Button className="btn-poke" onClick={() => {
               this.props.onLoadedDex(new DexProfile());
               history.push("/profile");
             }}>Create new PokIndex</Button>

@@ -3,7 +3,7 @@
 
 $theme-colors: (
   'primary': black,
-  'danger': tomato,
+  'secondary': green,
 );
 
 .poke-button {
@@ -27,10 +27,24 @@ body {
 /* 1280x720 */
 @media (min-width: 481px) {
   body {
-    background-image: url("res/pokemon_background_desktop.png");
+    background: url("res/pokemon_background_desktop.png") no-repeat center center fixed;
+    -webkit-background-size: cover;
+    -moz-background-size: cover;
+    -o-background-size: cover;
     background-size: cover;
-    background-repeat: no-repeat;
+    // background-image: url("res/pokemon_background_desktop.png");
+    // background-size: 100% 100%;
+    // background-repeat: no-repeat;
   }
 }
 
 @import "../node_modules/bootstrap/scss/bootstrap";
+
+.btn-poke {
+  @extend .rounded-pill, .px-4, .m-2;
+}
+
+.btn-poke-danger {
+  @extend .btn-poke;
+  background-color: red;
+}
