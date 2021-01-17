@@ -2,41 +2,100 @@ import React from 'react';
 import { Route } from 'react-router-dom';
 import { downloadTextFile } from './util.js';
 import { LineChart } from 'react-chartkick'
-import { Container, Row, Button } from 'react-bootstrap';
+import { Container, Row, Button, Card, CardColumns } from 'react-bootstrap';
 import 'chart.js'
 
 export class Profile extends React.Component {
 
+  constructor(props) {
+    super(props);
+    this.state = {
+      forceUpdateButton: true,
+    }
+  }
+
   getChartData() {
     let data = {};
-    // let i;
-    // for (i = 0; i < this.props.dexProfile.history.length; i++) {
-    //   const prevProfile = this.props.dexProfile.history[i];
-    //   data[prevProfile.lastUpdatedCosts.toString()] = prevProfile.getTotalCardEstimate();
-    // }
-    // data[(new Date()).toString()] = this.props.dexProfile.getTotalCardEstimate();
+    let i;
+    for (i = 0; i < this.props.dexProfile.history.length; i++) {
+      const prevProfile = this.props.dexProfile.history[i];
+      data[prevProfile.lastUpdated.toString()] = prevProfile.getTotalCardEstimate();
+    }
+    data[this.props.dexProfile.lastUpdated.toString()] = this.props.dexProfile.getTotalCardEstimate();
     return data;
+  }
+
+  getCardView(card) {
+    return (
+      <Card style={{ width: '18rem', margin: "10px" }}>
+        <Card.Img style={{ height: '200px', width: '100%' }} src={card.imageUrl} />
+        <Card.Body>
+          <Card.Title>{card.cardName}</Card.Title>
+          <Card.Text>
+            Card id: {card.firstId + "/" + card.secondId}
+          </Card.Text>
+          <Button variant="primary">Refresh Card?</Button>
+        </Card.Body>
+        <Card.Footer>
+          <small>{card.updatedSinceString()}</small>
+        </Card.Footer>
+      </Card>
+    );
+  }
+
+  getPokeCards() {
+    const cards = [];
+    let i;
+    for (i = 0; i < this.props.dexProfile.cards.length; i++) {
+      const card = this.props.dexProfile.cards[i];
+      cards.push(this.getCardView(card));
+    }
+    return (
+      <CardColumns className="m-4">
+        {cards}
+      </CardColumns>
+    );
   }
 
   render() {
     return (
       <Route exact={true} path="/profile" render={({history}) => (
-        <Container className="mt-4">
+        <Container fluid className="mt-4">
           <Row>
-            <Button className="rounded-pill px-4 m-2" onClick={() => history.push("/scanner")}>Scanner</Button>
-            <Button className="rounded-pill px-4 m-2" onClick={() => history.push("/newcard")}>Manual Enter Card</Button>
+            <Button className="btn-poke" onClick={() => history.push("/scanner")}>Scanner</Button>
+            <Button className="btn-poke" onClick={() => history.push("/newcard")}>Manual Enter Card</Button>
             {this.props.dexProfile.cards.length > 0 && (
-              <Button className="rounded-pill px-4 m-2" onClick={() => downloadTextFile("profile.dex", this.props.dexProfile.getBlob())}>Save Dex</Button>
+              <Button className="btn-poke" onClick={() => downloadTextFile("profile.dex", this.props.dexProfile.getBlob())}>Save Dex</Button>
             )}
+            {this.props.dexProfile.checkIfCardsNeedUpdate() && (
+              <Button className="btn-poke" onClick={() => this.props.dexProfile.updateCards(false)}>Update Cards</Button>
+            )}
+            {this.state.forceUpdateButton && this.props.dexProfile.cards.length > 0 &&
+              <Button className="btn-poke-danger" onClick={() => {
+                this.props.dexProfile.updateCards(true).then(() =>{
+                  this.setState({...this.state, forceUpdateButton: false});
+                }).catch(err => {
+                  const error = {};
+                  error.type = "warning";
+                  error.component = (
+                    <h2>{err.toString()}</h2>
+                  );
+                  this.props.onError(error);
+                });
+              }}>Force Update</Button>
+            }
           </Row>
-          <Row>
+          <Row className="ml-2">
             <h2>Total cards: {this.props.dexProfile.cards.length}</h2>
           </Row>
-          <Row>
+          <Row className="ml-2">
             <h2>Total price: {this.props.dexProfile.getTotalCardEstimate()}</h2>
           </Row>
           <Row>
             <LineChart data={this.getChartData()}/>
+          </Row>
+          <Row>
+            {this.getPokeCards()}
           </Row>
         </Container>
       )}/>
