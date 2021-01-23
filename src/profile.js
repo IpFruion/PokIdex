@@ -19,7 +19,7 @@ export class Profile extends React.Component {
     let i;
     for (i = 0; i < this.props.dexProfile.history.length; i++) {
       const prevProfile = this.props.dexProfile.history[i];
-      data[prevProfile.lastUpdated.toString()] = prevProfile.getTotalCardEstimate();
+      data[prevProfile.lastUpdated.toString()] = prevProfile.totalCardsCost;
     }
     data[this.props.dexProfile.lastUpdated.toString()] = this.props.dexProfile.getTotalCardEstimate();
     return data;
@@ -31,8 +31,9 @@ export class Profile extends React.Component {
         <Card.Img style={{ height: '200px', width: '100%' }} src={card.imageUrl} />
         <Card.Body>
           <Card.Title>{card.cardName}</Card.Title>
+          <Card.Subtitle className="mb-2 text-muted">{card.id}</Card.Subtitle>
           <Card.Text>
-            Card id: {card.firstId + "/" + card.secondId}
+            Cost Estimate: ${card.costEstimate}
           </Card.Text>
           <Button variant="primary">Refresh Card?</Button>
         </Card.Body>
@@ -89,10 +90,10 @@ export class Profile extends React.Component {
             <h2>Total cards: {this.props.dexProfile.cards.length}</h2>
           </Row>
           <Row className="ml-2">
-            <h2>Total price: {this.props.dexProfile.getTotalCardEstimate()}</h2>
+            <h2>Total price: ${this.props.dexProfile.getTotalCardEstimate()}</h2>
           </Row>
           <Row>
-            <LineChart data={this.getChartData()}/>
+            <LineChart prefix='$' xtitle="Time" ytitle="Money" data={this.getChartData()}/>
           </Row>
           <Row>
             {this.getPokeCards()}

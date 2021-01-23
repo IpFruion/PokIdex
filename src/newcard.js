@@ -1,12 +1,8 @@
 import React from 'react';
 import { Route } from 'react-router-dom';
-import { PokeCard } from './util.js';
+import { PokeCard, POKE_CARD_VALIDATOR } from './util.js';
 import { Container, Form, Button, Toast } from 'react-bootstrap';
 import { Formik } from 'formik';
-
-
-const CARD_NAME_REGEX = /^[a-zA-Z]*$/;
-const CARD_NUMBER_REGEX = /^(\d*)[/](\d*)$/;
 
 export class NewCard extends React.Component {
 
@@ -19,8 +15,7 @@ export class NewCard extends React.Component {
   }
 
   submitData(values, form) {
-    const matches = values.cardNumbers.match(CARD_NUMBER_REGEX);
-    const card = new PokeCard(values.cardName, matches[1], matches[2]);
+    const card = PokeCard.parseEntries(values.cardName, values.id, values.quantity);
     card.updateData().then(card => {
       this.props.addCardToDex(card);
       this.setState({...this.state, currentCard: card});
@@ -29,6 +24,7 @@ export class NewCard extends React.Component {
       const msg = "Card Data Error";
       form.setFieldError("cardName", msg);
       form.setFieldError("cardNumbers", msg);
+      console.log(err);
       const error = {};
       error.type = 'danger';
       error.component = (
@@ -40,25 +36,14 @@ export class NewCard extends React.Component {
 
   validateCard(values, props) {
     const errors = {};
-    if (values.cardName) {
-      if (!values.cardName.match(CARD_NAME_REGEX)) {
-        errors.cardName = "Card Name can't have spaces or numbers";
+    for (const [key, value] of Object.entries(values)) {
+      if (POKE_CARD_VALIDATOR[key]) {
+        const error = POKE_CARD_VALIDATOR[key](value);
+        if (error) {
+          errors[key] = error.message;
+        }
       }
-    } else {
-      errors.cardName = "Card Name is required";
     }
-
-    if (values.cardNumbers) {
-      const matching = values.cardNumbers.match(CARD_NUMBER_REGEX);
-      if (!matching) {
-        errors.cardNumbers = "Card Numbers must be in the form of 'num/num'"
-      } else if (Number(matching[1]) > Number(matching[2])) {
-        errors.cardNumbers = "Card Numbers must be in order i.e. firstNum <= secondNum"
-      }
-    } else {
-      errors.cardNumbers = "Card Numbers is required";
-    }
-
     return errors;
   }
 
@@ -76,15 +61,15 @@ export class NewCard extends React.Component {
         >
           <Toast.Header>
             <img
+              style={{ height: '40px', width: '20px', marginRight: '5dp' }}
               src={this.state.currentCard.imageUrl}
-              className="rounded mr-2"
               alt=""
             />
             <strong className="mr-auto">{this.state.currentCard.cardName}</strong>
             <small>{this.state.currentCard.lastUpdated.toLocaleString()}</small>
           </Toast.Header>
           <Toast.Body>
-            Loaded {this.state.currentCard.cardName} - {this.state.currentCard.firstId + "/" + this.state.currentCard.secondId} cost value of ${this.state.currentCard.costEstimate}!
+            Loaded {this.state.currentCard.cardName} - {this.state.currentCard.id} cost value of ${this.state.currentCard.costEstimate}!
           </Toast.Body>
         </Toast>
       );
@@ -100,7 +85,8 @@ export class NewCard extends React.Component {
             onSubmit={this.submitData}
             initialValues={{
               cardName: '',
-              cardNumbers: '',
+              id: '',
+              quantity: 1,
             }}
             validate={this.validateCard}
           >
@@ -113,14 +99,14 @@ export class NewCard extends React.Component {
               handleSubmit,
             }) => (
               <Form noValidate onSubmit={handleSubmit}>
-                <Form.Group controlId="cardNameValidation">
+                <Form.Group>
                   <Form.Label>Card Name</Form.Label>
                   <Form.Control
                     name="cardName"
                     onChange={handleChange}
                     value={values.cardName}
-                    isValid={touched.cardName && !errors.cardName}
-                    isInvalid={touched.cardName && !!errors.cardName}
+                    isValid={values.cardName && !errors.cardName}
+                    isInvalid={(values.cardName || touched.cardName) && !!errors.cardName}
                     type="text"
                     placeholder="Enter Card Name"
                   />
@@ -128,22 +114,37 @@ export class NewCard extends React.Component {
                     {errors.cardName}
                   </Form.Control.Feedback>
                 </Form.Group>
-                <Form.Group controlId="cardNumbersValidation">
-                  <Form.Label>Card Numbers</Form.Label>
+                <Form.Group>
+                  <Form.Label>Card ID Numbers</Form.Label>
                   <Form.Control
-                    name="cardNumbers"
+                    name="id"
                     onChange={handleChange}
-                    value={values.cardNumbers}
+                    value={values.id}
                     type="text"
-                    placeholder="Enter Card First/Second Numbers"
-                    isValid={touched.cardNumbers && !errors.cardNumbers}
-                    isInvalid={touched.cardNumbers && !!errors.cardNumbers}
+                    placeholder="Enter Card Id"
+                    isValid={values.id && !errors.id}
+                    isInvalid={(values.id || touched.id) && !!errors.id}
                   />
                   <Form.Text className="text-muted">
-                    i.e. "141/189"
+                    i.e. "141/189" or "058" or "SWSH063"
                   </Form.Text>
                   <Form.Control.Feedback type="invalid">
-                    {errors.cardNumbers}
+                    {errors.id}
+                  </Form.Control.Feedback>
+                </Form.Group>
+                <Form.Group>
+                  <Form.Label>Quantity</Form.Label>
+                  <Form.Control
+                    name="quantity"
+                    onChange={handleChange}
+                    value={values.quantity}
+                    isValid={values.quantity && !errors.quantity}
+                    isInvalid={(values.quantity || touched.quantity) && !!errors.quantity}
+                    type="text"
+                    placeholder="Quantity"
+                  />
+                  <Form.Control.Feedback type="invalid">
+                    {errors.quantity}
                   </Form.Control.Feedback>
                 </Form.Group>
                 <Button className="btn-poke" type="submit">Submit Card</Button>

@@ -18,9 +18,14 @@ body {
 /* 320x640 */
 @media (max-width: 480px) {
   body {
-    background-image: url("res/pokemon_background_mobile_2.png");
+    // background-image: url("res/pokemon_background_mobile_2.png");
+    // background-size: cover;
+    // background-repeat: no-repeat;
+    background: url("res/pokemon_background_mobile_2.png") no-repeat center center fixed;
+    -webkit-background-size: cover;
+    -moz-background-size: cover;
+    -o-background-size: cover;
     background-size: cover;
-    background-repeat: no-repeat;
   }
 }
 

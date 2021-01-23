@@ -1,3 +1,8 @@
+
+function roundNumber(num, scale) {
+  return +(Math.round(num + "e+" + scale) + "e-" + scale);
+}
+
 class DateTimeInterval {
   constructor(obj) {
     this.time = 0;
@@ -70,12 +75,60 @@ class DateTimeInterval {
   }
 }
 
+export class ValidationError extends Error {
+  constructor(msg, fieldName) {
+    super(msg);
+    this.fieldName = fieldName;
+  }
+}
+
 const MONEY_REGEX = /\$(([1-9]\d{0,2}(,\d{3})*)|(([1-9]\d*)?\d))(\.\d\d)/;
 const SOLD_RESULTS_REGEX = /^\D*([\d])/;
 const CARD_UPDATE_TIMEOUT = new DateTimeInterval({days: 3});
 const CORS_ANYWHERE = 'https://cors-anywhere.herokuapp.com/';
 const MAVIN_URL = CORS_ANYWHERE + "https://mavin.io/search";
 const POKEMON_TCG_URL = 'https://api.pokemontcg.io/v1/cards';
+
+const CARD_NAME_REGEX = /^[a-zA-Z ]*$/;
+const CARD_NUMBER_SLASH_NUMBER_REGEX = /^(\d{1,3})[/](\d{1,3})$/;
+const CARD_NUMBER_REGEX = /^(\d{1,3})$/
+const CARD_PACK_NUMBER_REGEX = /^[A-Z]*(\d{1,3})$/;
+
+export const POKE_CARD_VALIDATOR = {
+  cardName: cardName => {
+    if (!cardName) {
+      return new Error("Card Name is required");
+    }
+    const cardNameMatch = cardName.match(CARD_NAME_REGEX);
+    if (!cardNameMatch) {
+      return new Error("Card Name can't have numbers or other characters");
+    }
+  },
+  id: id => {
+    try {
+      PokeCard._parseId(id);
+    } catch (e) {
+      return e;
+    }
+    return null;
+  },
+  quantity: quantity => {
+    if (!quantity) {
+      return new Error("Quantity is required");
+    }
+    if (!quantity.match(/^\d*$/)) {
+      return new Error("Quantity must be a number");
+    }
+    const n = Number(quantity);
+    if (!Number.isInteger(n)) {
+      return new Error("Quantity must be an integer number");
+    }
+    if (n < 1) {
+      return new Error("Quantity must be greater than or equal to 1");
+    }
+  }
+
+}
 
 export function downloadTextFile(fileName, data) {
   const element = document.createElement("a");
@@ -100,10 +153,14 @@ function formatURL(url, params) {
 }
 
 export class PokeCard {
-  constructor(cardName, firstId, secondId) {
+  constructor(cardName, id, number, secondNumber, quantity) {
     this.cardName = cardName;
-    this.firstId = firstId;
-    this.secondId = secondId;
+    this.id = id;
+    this.number = number;
+    this.quantity = quantity;
+    this.secondNumber = secondNumber;
+
+    //Values gained from websites
     this.lastUpdated = null;
     this.costEstimate = null;
     this.highValue = null;
@@ -113,7 +170,7 @@ export class PokeCard {
   }
 
   toString() {
-    return this.cardName + " " + String(this.firstId) + "/" + String(this.secondId);
+    return this.cardName + " " + String(this.id);
   }
 
   updatedSinceString() {
@@ -135,7 +192,7 @@ export class PokeCard {
   _updateCardData() {
     const url = formatURL(POKEMON_TCG_URL, {
       name: this.cardName,
-      number: Number(this.firstId).toString(),
+      number: Number(this.number).toString(),
     });
     return fetch(url)
       .then(res => res.text())
@@ -152,7 +209,7 @@ export class PokeCard {
   _updateCostData() {
     // TODO: Fix for not using proxy service for the requests possible port to server side data (depending on popularity)
     const url = formatURL(MAVIN_URL, {
-      q: this.cardName + " " + this.firstId + "/" + this.secondId,
+      q: this.cardName + " " + this.id,
       bt: "sold",
     });
     return fetch(url)
@@ -188,9 +245,52 @@ export class PokeCard {
   }
   static fromObj(obj) {
     const card = Object.assign(new PokeCard(), obj);
+    // Verify card?
+    // card.verifyCard();
     card.lastUpdated = new Date(card.lastUpdated);
     return card;
   }
+
+  static _parseId(id) {
+    if (!id) {
+      throw new Error("Card Numbers is required");
+    }
+    const cardSlashMatch = id.match(CARD_NUMBER_SLASH_NUMBER_REGEX);
+    const cardNumberMatch = id.match(CARD_NUMBER_REGEX);
+    const cardPackMatch = id.match(CARD_PACK_NUMBER_REGEX);
+    let number = null;
+    let secondNumber = null;
+    if (cardSlashMatch) {
+      if (Number(cardSlashMatch[1]) > Number(cardSlashMatch[2])) {
+        throw new Error("Card Numbers must be in order i.e. firstNum <= secondNum");
+      }
+      number = cardSlashMatch[1];
+      secondNumber = cardSlashMatch[2];
+    } else if (cardNumberMatch) {
+      number = cardNumberMatch[1];
+    } else if (cardPackMatch) {
+      number = cardPackMatch[1];
+    } else {
+      throw new Error("Card Numbers must be in the form of 'num/num' or 'num' or '<packname><num>'");
+    }
+    return [number, secondNumber];
+  }
+
+  static parseEntries(cardName, id, quantity) {
+    const cardNameError = POKE_CARD_VALIDATOR["cardName"](cardName);
+    if (cardNameError) {
+      throw cardNameError;
+    }
+    const [number, secondNumber] = PokeCard._parseId(id);
+    const quantityError = POKE_CARD_VALIDATOR["quantity"](quantity);
+    if (quantityError) {
+      throw quantityError;
+    }
+
+    return new PokeCard(cardName, id, number, secondNumber, quantity)
+  }
+
+
 }
 
 export class DexProfile {
@@ -201,13 +301,11 @@ export class DexProfile {
   }
 
   _takeSnapshotToHistory() {
-    const event = [];
-    let i;
-    for (i = 0; i < this.cards.length; i++) {
-      const copy = Object.assign({}, this.cards[i]);
-      event.push(copy);
-    }
-    this.history.push(Object.assign(new DexProfile(), {cards: event, lastUpdated: this.lastUpdated}));
+    const snapshot = {
+      lastUpdated: this.lastUpdated,
+      totalCardsCost: this.getTotalCardEstimate(),
+    };
+    this.history.push(snapshot);
   }
 
   addCard(card) {
@@ -268,7 +366,7 @@ export class DexProfile {
     for(i = 0; i < this.cards.length; i++) {
       total = total + this.cards[i].costEstimate;
     }
-    return total;
+    return roundNumber(total, 2);
   }
 
   getBlob() {
@@ -279,9 +377,12 @@ export class DexProfile {
     let profile = new DexProfile();
     profile = Object.assign(profile, obj);
     let i;
-    for (i = 0; i < profile.history.length; i++) {
-      profile.history[i] = DexProfile.fromObj(profile.history[i]);
-    }
+    // for (i = 0; i < profile.history.length; i++) {
+    //   profile.history[i] = {
+    //     lastUpdated: profile.history[i].lastUpdated,
+    //     totalCardsCost: profile.history[i].totalCardsCost,
+    //   };
+    // }
     for (i = 0; i < profile.cards.length; i++) {
       profile.cards[i] = PokeCard.fromObj(profile.cards[i]);
     }
