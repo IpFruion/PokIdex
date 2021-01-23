@@ -8,6 +8,8 @@ Suggestions and issue requests appreciated. **There will be bugs**
 
 Enjoy :), IpFruion
 
+[App](./build/index.html)
+
 [^2]: [Icon](https://rankedboost.com/pokemon-go/gen-4-pokedex/) [Background](https://www.pinterest.com/pin/151574343683447160/) [Mavin Data](https://mavin.io)
 
 [^3]: React, opencv, bootstrap.
