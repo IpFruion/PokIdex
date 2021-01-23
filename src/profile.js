@@ -26,6 +26,7 @@ export class Profile extends React.Component {
   }
 
   getCardView(card) {
+    <Button variant="primary">Refresh Card?</Button>
     return (
       <Card style={{ width: '18rem', margin: "10px" }}>
         <Card.Img style={{ height: '200px', width: '100%' }} src={card.imageUrl} />
@@ -35,7 +36,6 @@ export class Profile extends React.Component {
           <Card.Text>
             Cost Estimate: ${card.costEstimate}
           </Card.Text>
-          <Button variant="primary">Refresh Card?</Button>
         </Card.Body>
         <Card.Footer>
           <small>{card.updatedSinceString()}</small>
@@ -59,11 +59,11 @@ export class Profile extends React.Component {
   }
 
   render() {
+    // <Button className="btn-poke" onClick={() => history.push("/scanner")}>Scanner</Button>
     return (
       <Route exact={true} path="/profile" render={({history}) => (
         <Container fluid className="mt-4">
           <Row>
-            <Button className="btn-poke" onClick={() => history.push("/scanner")}>Scanner</Button>
             <Button className="btn-poke" onClick={() => history.push("/newcard")}>Manual Enter Card</Button>
             {this.props.dexProfile.cards.length > 0 && (
               <Button className="btn-poke" onClick={() => downloadTextFile("profile.dex", this.props.dexProfile.getBlob())}>Save Dex</Button>
