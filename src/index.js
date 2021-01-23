@@ -45,7 +45,6 @@ class App extends React.Component {
 
   getErrorStatus() {
     if (this.state.error) {
-      console.log(this.state.error);
       setTimeout(() => this.setState({...this.state, error: null}), 10000);
       return (
         <Alert show={true} variant={this.state.error.type}>{this.state.error.component}</Alert>
